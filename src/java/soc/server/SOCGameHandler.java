@@ -22,6 +22,10 @@
  **/
 package soc.server;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -3800,6 +3804,8 @@ public class SOCGameHandler extends GameHandler
                 srv.messageToGame(gaName, makeOfferMessage);
 
                 srv.recordGameEvent(gaName, makeOfferMessage.toCmd());
+                
+                saveFeatures(ga, player, "MAKE_OFFER");
 
                 /**
                  * clear all the trade messages because a new offer has been made
@@ -3968,6 +3974,9 @@ public class SOCGameHandler extends GameHandler
 
                     final int cpn = ga.getCurrentPlayerNumber();
                     final SOCPlayer cpl = ga.getPlayer(cpn);
+                   
+                    saveFeatures(ga, cpl, "BANK_TRADE");
+                    
                     if (cpl.isRobot())
                         c.put(SOCSimpleAction.toCmd(gaName, cpn, SOCSimpleAction.TRADE_SUCCESSFUL, 0, 0));
                 }
@@ -4029,6 +4038,7 @@ public class SOCGameHandler extends GameHandler
                             srv.messageToGame(gaName, new SOCPlayerElement(gaName, pn, SOCPlayerElement.LOSE, SOCPlayerElement.CLAY, 1));
                             srv.messageToGame(gaName, new SOCPlayerElement(gaName, pn, SOCPlayerElement.LOSE, SOCPlayerElement.WOOD, 1));
                             sendGameState(ga);
+                            saveFeatures(ga, player, "BUILD_ROAD");
                         }
                         else
                         {
@@ -4050,6 +4060,7 @@ public class SOCGameHandler extends GameHandler
                             srv.messageToGameWithMon(gaName, new SOCPlayerElement(gaName, pn, SOCPlayerElement.LOSE, SOCPlayerElement.WOOD, 1));
                             srv.gameList.releaseMonitorForGame(gaName);
                             sendGameState(ga);
+                            saveFeatures(ga, player, "BUILD_SETTLEMENT");
                         }
                         else
                         {
@@ -4067,6 +4078,7 @@ public class SOCGameHandler extends GameHandler
                             srv.messageToGame(ga.getName(), new SOCPlayerElement(ga.getName(), pn, SOCPlayerElement.LOSE, SOCPlayerElement.ORE, 3));
                             srv.messageToGame(ga.getName(), new SOCPlayerElement(ga.getName(), pn, SOCPlayerElement.LOSE, SOCPlayerElement.WHEAT, 2));
                             sendGameState(ga);
+                            saveFeatures(ga, player, "BUILD_CITY");
                         }
                         else
                         {
@@ -4413,6 +4425,8 @@ public class SOCGameHandler extends GameHandler
             {
                 srv.messageToPlayer(c, new SOCCancelBuildRequest(gaName, -2));  // == SOCPossiblePiece.CARD
             }
+            if (!sendDenyReply)
+            	saveFeatures(ga, player, "BUY_DEV_CARD");
         }
         catch (Exception e)
         {
@@ -4578,6 +4592,9 @@ public class SOCGameHandler extends GameHandler
                     // in case ctype was changed here from message value.
 
                 }
+
+                if (!denyPlayCardNow)
+                	saveFeatures(ga, player, "PLAY_CARD");
             }
             else
             {
@@ -5696,5 +5713,130 @@ public class SOCGameHandler extends GameHandler
         final String gaName = ga.getName();
         ga.pendingMessagesOut.add(new SOCSVPTextMessage(gaName, pl.getPlayerNumber(), svp, desc));
     }
+    
+    
+    public void saveFeatures(SOCGame ga, SOCPlayer player, String output) {
+    	
+    	/**
+    	 * Order
+    	 * 
+    	 * Clay
+    	 * Wheat
+    	 * Sheep
+    	 * Wood
+    	 * Ore
+    	 * Public Victory Points
+    	 * Total Victory Points
+    	 * Roads
+    	 * Settlements
+    	 * Cities
+    	 * Cards
+    	 * Knights
+    	 * Longest Road
+    	 * Best Trade for Clay
+    	 * Best Trade for Wheat
+    	 * Best Trade for Sheep
+    	 * Best Trade for Wood
+    	 * Best Trade for Ore
+    	 */
+    	
+    	StringBuilder str = new StringBuilder();
+    	str.append(player.getResources().getAmount(SOCResourceConstants.CLAY)).append(',');
+    	str.append(player.getResources().getAmount(SOCResourceConstants.WHEAT)).append(',');
+    	str.append(player.getResources().getAmount(SOCResourceConstants.SHEEP)).append(',');
+    	str.append(player.getResources().getAmount(SOCResourceConstants.WOOD)).append(',');
+    	str.append(player.getResources().getAmount(SOCResourceConstants.ORE)).append(',');
+    	
+    	str.append(player.getPublicVP()).append(',');
+    	str.append(player.getTotalVP()).append(',');
+    	
+    	str.append(player.getRoads().size()).append(',');
+    	str.append(player.getSettlements().size()).append(',');
+    	str.append(player.getCities().size()).append(',');
+    	str.append(player.getInventory().getTotal()).append(',');
+    	str.append(player.getNumKnights()).append(',');
+    	
+    	str.append(player.getLongestRoadLength()).append(',');
+    	
+    	int bestGeneralPort = player.getPortFlag(SOCBoard.MISC_PORT) ? 3 : 4;
+    	str.append(player.getPortFlag(SOCBoard.CLAY_PORT) ? 2 : bestGeneralPort).append(',');
+    	str.append(player.getPortFlag(SOCBoard.WHEAT_PORT) ? 2 : bestGeneralPort).append(',');
+    	str.append(player.getPortFlag(SOCBoard.SHEEP_PORT) ? 2 : bestGeneralPort).append(',');
+    	str.append(player.getPortFlag(SOCBoard.WOOD_PORT) ? 2 : bestGeneralPort).append(',');
+    	str.append(player.getPortFlag(SOCBoard.ORE_PORT) ? 2 : bestGeneralPort).append(',');
+    	
+    	calcProbabilities(ga, player, str);
+    	
+    	File file = new File("catan_data.txt");
+    	try {
+    		str.append('\n');
+    		FileWriter fileWriter = new FileWriter(file.getName(),true);
+	        BufferedWriter bufferWritter = new BufferedWriter(fileWriter);
+	        bufferWritter.write(str.toString());
+	        bufferWritter.close();
+    	} catch (Exception e) {}
+    	
+    }
+
+	private void calcProbabilities(SOCGame ga, SOCPlayer p, StringBuilder str) {
+		double[] probability = new double[6];
+        double[] averagePayout = new double[6];
+        
+        for(int i = 0; i < 6; i++) {
+                probability[i] = 0;
+                averagePayout[i] = 0;
+        }
+        
+        double[] probabilities = {0,0,1/36,2/36,3/36,4/36,5/36,6/36,5/36,4/36,3/36,2/36,1/36}; 
+        
+        for(int i = 2; i <= 12; i++) {
+                if (i != 7) {
+                        SOCResourceSet resources = ga.getResourcesGainedFromRoll(p,i);
+                        //did I roll wheat
+                        if (resources.contains(SOCResourceConstants.CLAY)) {
+                                probability[SOCResourceConstants.CLAY] += probabilities[i];
+                                averagePayout[SOCResourceConstants.CLAY] += probabilities[i] * resources.getAmount(SOCResourceConstants.CLAY);
+                        }
+                        
+                        if (resources.contains(SOCResourceConstants.ORE)) {
+                                probability[SOCResourceConstants.ORE] += probabilities[i];
+                                averagePayout[SOCResourceConstants.ORE] += probabilities[i] * resources.getAmount(SOCResourceConstants.ORE);
+                        }
+                        
+                        if (resources.contains(SOCResourceConstants.SHEEP)) {
+                                probability[SOCResourceConstants.SHEEP] += probabilities[i];
+                                averagePayout[SOCResourceConstants.SHEEP] += probabilities[i] * resources.getAmount(SOCResourceConstants.SHEEP);
+                        }
+                        
+                        if (resources.contains(SOCResourceConstants.WHEAT)) {
+                                probability[SOCResourceConstants.WHEAT] += probabilities[i];
+                                averagePayout[SOCResourceConstants.WHEAT] += probabilities[i] * resources.getAmount(SOCResourceConstants.WHEAT);
+                        }
+                        
+                        if (resources.contains(SOCResourceConstants.WOOD)) {
+                                probability[SOCResourceConstants.WOOD] += probabilities[i];
+                                averagePayout[SOCResourceConstants.WOOD] += probabilities[i] * resources.getAmount(SOCResourceConstants.WOOD);
+                        }
+                }
+        }
+                
+                
+        for(int i = 1; i <= 5; i++) {
+        	averagePayout[i] = (probability[i] == 0.0) ? 0 : averagePayout[i] / probability[i];
+                
+        }
+        
+        str.append(probability[SOCResourceConstants.CLAY]).append(',');
+        str.append(probability[SOCResourceConstants.ORE]).append(',');
+        str.append(probability[SOCResourceConstants.SHEEP]).append(',');
+        str.append(probability[SOCResourceConstants.WHEAT]).append(',');
+        str.append(probability[SOCResourceConstants.WOOD]).append(',');
+        str.append(averagePayout[SOCResourceConstants.CLAY]).append(',');
+        str.append(averagePayout[SOCResourceConstants.ORE]).append(',');
+        str.append(averagePayout[SOCResourceConstants.SHEEP]).append(',');
+        str.append(averagePayout[SOCResourceConstants.WHEAT]).append(',');
+        str.append(averagePayout[SOCResourceConstants.WOOD]).append(',');     
+            
+	}
 
 }

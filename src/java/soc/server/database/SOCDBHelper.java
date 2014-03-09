@@ -745,7 +745,8 @@ public class SOCDBHelper
         // Check ga.maxPlayers.
 
         // ensure that the JDBC connection is still valid
-        if (checkConnection())
+    	
+        /*if (checkConnection())
         {
             String[] names = new String[ga.maxPlayers];
             short[] scores = new short[ga.maxPlayers];
@@ -789,7 +790,7 @@ public class SOCDBHelper
                 sqlE.printStackTrace();
                 throw sqlE;
             }
-        }
+        }*/
 
         return false;
     }

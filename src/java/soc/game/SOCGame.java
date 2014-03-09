@@ -4722,7 +4722,7 @@ public class SOCGame implements Serializable, Cloneable
      *
      * @return the resource set
      */
-    private SOCResourceSet getResourcesGainedFromRoll(SOCPlayer player, final int roll)
+    public SOCResourceSet getResourcesGainedFromRoll(SOCPlayer player, final int roll)
     {
         SOCResourceSet resources = new SOCResourceSet();
         SOCResourceSet missedResources = new SOCResourceSet();
@@ -8000,5 +8000,5 @@ public class SOCGame implements Serializable, Cloneable
         }
 
     }  // nested class RollResult
-
+   
 }

@@ -5787,36 +5787,49 @@ public class SOCGameHandler extends GameHandler
                 averagePayout[i] = 0;
         }
         
-        double[] probabilities = {0,0,1/36,2/36,3/36,4/36,5/36,6/36,5/36,4/36,3/36,2/36,1/36}; 
+        boolean debug = true;
+        double[] probabilities = {0,0,1.0/36.0,2.0/36.0,3.0/36.0,4.0/36.0,5.0/36.0,6.0/36.0,5.0/36.0,4.0/36.0,3.0/36.0,2.0/36.0,1.0/36.0}; 
+        
+        if(debug) {
+        	for (int i = 2; i <= 12; i++) {
+        		System.out.print("Index: " + i + " Value: " + probabilities[i]);
+        	}
+        }
         
         for(int i = 2; i <= 12; i++) {
                 if (i != 7) {
-                        SOCResourceSet resources = ga.getResourcesGainedFromRoll(p,i);
-                        //did I roll wheat
-                        if (resources.contains(SOCResourceConstants.CLAY)) {
-                                probability[SOCResourceConstants.CLAY] += probabilities[i];
-                                averagePayout[SOCResourceConstants.CLAY] += probabilities[i] * resources.getAmount(SOCResourceConstants.CLAY);
-                        }
-                        
-                        if (resources.contains(SOCResourceConstants.ORE)) {
-                                probability[SOCResourceConstants.ORE] += probabilities[i];
-                                averagePayout[SOCResourceConstants.ORE] += probabilities[i] * resources.getAmount(SOCResourceConstants.ORE);
-                        }
-                        
-                        if (resources.contains(SOCResourceConstants.SHEEP)) {
-                                probability[SOCResourceConstants.SHEEP] += probabilities[i];
-                                averagePayout[SOCResourceConstants.SHEEP] += probabilities[i] * resources.getAmount(SOCResourceConstants.SHEEP);
-                        }
-                        
-                        if (resources.contains(SOCResourceConstants.WHEAT)) {
-                                probability[SOCResourceConstants.WHEAT] += probabilities[i];
-                                averagePayout[SOCResourceConstants.WHEAT] += probabilities[i] * resources.getAmount(SOCResourceConstants.WHEAT);
-                        }
-                        
-                        if (resources.contains(SOCResourceConstants.WOOD)) {
-                                probability[SOCResourceConstants.WOOD] += probabilities[i];
-                                averagePayout[SOCResourceConstants.WOOD] += probabilities[i] * resources.getAmount(SOCResourceConstants.WOOD);
-                        }
+                    SOCResourceSet resources = ga.getResourcesGainedFromRoll(p,i);
+                    if (debug) System.out.println(resources.toString());
+                    if (debug) System.out.println(probabilities);
+                    if (resources.contains(SOCResourceConstants.CLAY)) {
+                            probability[SOCResourceConstants.CLAY] += probabilities[i];
+                            averagePayout[SOCResourceConstants.CLAY] += probabilities[i] * resources.getAmount(SOCResourceConstants.CLAY);
+                            if (debug) System.out.println("CLAY: Prob: " + probabilities[i] + " Amount: " + resources.getAmount(SOCResourceConstants.CLAY));
+                    }
+                    
+                    if (resources.contains(SOCResourceConstants.ORE)) {
+                            probability[SOCResourceConstants.ORE] += probabilities[i];
+                            averagePayout[SOCResourceConstants.ORE] += probabilities[i] * resources.getAmount(SOCResourceConstants.ORE);
+                            if (debug) System.out.println("ORE: Prob: " + probabilities[i] + " Amount: " + resources.getAmount(SOCResourceConstants.ORE));
+                    }
+                    
+                    if (resources.contains(SOCResourceConstants.SHEEP)) {
+                            probability[SOCResourceConstants.SHEEP] += probabilities[i];
+                            averagePayout[SOCResourceConstants.SHEEP] += probabilities[i] * resources.getAmount(SOCResourceConstants.SHEEP);
+                            if (debug) System.out.println("SHEEP: Prob: " + probabilities[i] + " Amount: " + resources.getAmount(SOCResourceConstants.SHEEP));
+                    }
+                    
+                    if (resources.contains(SOCResourceConstants.WHEAT)) {
+                            probability[SOCResourceConstants.WHEAT] += probabilities[i];
+                            averagePayout[SOCResourceConstants.WHEAT] += probabilities[i] * resources.getAmount(SOCResourceConstants.WHEAT);
+                            if (debug) System.out.println("WHEAT: Prob: " + probabilities[i] + " Amount: " + resources.getAmount(SOCResourceConstants.WHEAT));
+                    }
+                    
+                    if (resources.contains(SOCResourceConstants.WOOD)) {
+                            probability[SOCResourceConstants.WOOD] += probabilities[i];
+                            averagePayout[SOCResourceConstants.WOOD] += probabilities[i] * resources.getAmount(SOCResourceConstants.WOOD);
+                            if (debug) System.out.println("WOOD: Prob: " + probabilities[i] + " Amount: " + resources.getAmount(SOCResourceConstants.WOOD));
+                    }
                 }
         }
                 

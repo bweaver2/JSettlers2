@@ -1903,6 +1903,8 @@ public class SOCGameHandler extends GameHandler
             break;
 
         case SOCGame.OVER:
+        	//write winner data to file.
+        	printMoveHistory(ga.getPlayerWithWin());
             sendGameStateOVER(ga);
             break;
 
@@ -3646,6 +3648,7 @@ public class SOCGameHandler extends GameHandler
                 SOCPlayer pl = ga.getPlayer(plName);
                 if ((pl != null) && ga.canEndTurn(pl.getPlayerNumber()))
                 {
+                	saveFeatures(ga, pl, "DO_NOTHING");
                     endGameTurn(ga, pl, true);
                 }
                 else
@@ -5740,7 +5743,11 @@ public class SOCGameHandler extends GameHandler
     	 * Best Trade for Ore
     	 */
     	
-    	StringBuilder str = new StringBuilder();
+    	StringBuilder str = player.getMoveHistory();
+    	if (str == null) {
+    		str = new StringBuilder();
+    		player.setMoveHistory(str);
+    	}
     	str.append(player.getResources().getAmount(SOCResourceConstants.CLAY)).append(',');
     	str.append(player.getResources().getAmount(SOCResourceConstants.WHEAT)).append(',');
     	str.append(player.getResources().getAmount(SOCResourceConstants.SHEEP)).append(',');
@@ -5767,14 +5774,9 @@ public class SOCGameHandler extends GameHandler
     	
     	calcProbabilities(ga, player, str);
     	
-    	File file = new File("catan_data.txt");
-    	try {
-    		str.append('\n');
-    		FileWriter fileWriter = new FileWriter(file.getName(),true);
-	        BufferedWriter bufferWritter = new BufferedWriter(fileWriter);
-	        bufferWritter.write(str.toString());
-	        bufferWritter.close();
-    	} catch (Exception e) {}
+    	//lastly we append the output
+    	str.append(output + '\n');
+    	
     	
     }
 
@@ -5850,6 +5852,24 @@ public class SOCGameHandler extends GameHandler
         str.append(averagePayout[SOCResourceConstants.WHEAT]).append(',');
         str.append(averagePayout[SOCResourceConstants.WOOD]).append(',');     
             
+	}
+	
+	public void printMoveHistory(SOCPlayer player) {
+		
+		StringBuilder str = player.getMoveHistory();
+		
+		if(str != null) {
+	    	File file = new File("catan_data.txt");
+	    	try {
+	    		str.append('\n');
+	    		FileWriter fileWriter = new FileWriter(file.getName(),true);
+		        BufferedWriter bufferWritter = new BufferedWriter(fileWriter);
+		        bufferWritter.write(str.toString());
+		        bufferWritter.close();
+	    	} catch (Exception e) {}
+		} else {
+			System.out.println("Could not print data mining results! Null Data");
+		}
 	}
 
 }

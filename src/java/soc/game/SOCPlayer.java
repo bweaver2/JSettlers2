@@ -533,6 +533,8 @@ public class SOCPlayer implements SOCDevCardConstants, Serializable, Cloneable
      */
 
     // private SOCBuildingSpeedEstimate buildingSpeed;
+    
+    private StringBuilder moveHistory;
 
     /**
      * create a copy of the player
@@ -559,6 +561,7 @@ public class SOCPlayer implements SOCDevCardConstants, Serializable, Cloneable
         resourceStats = new int[player.resourceStats.length];
         System.arraycopy(player.resourceStats, 0, resourceStats, 0, player.resourceStats.length);
         rolledResources = player.rolledResources.copy();
+        moveHistory = new StringBuilder(player.moveHistory);
         try
         {
             inventory = new SOCInventory(player.inventory);
@@ -683,6 +686,7 @@ public class SOCPlayer implements SOCDevCardConstants, Serializable, Cloneable
         faceId = 1;
         SOCBoard board = ga.getBoard();
         ourNumbers = new SOCPlayerNumbers(board);
+        moveHistory = new StringBuilder();
 
         // buildingSpeed = new SOCBuildingSpeedEstimate(this);
         ports = new boolean[SOCBoard.WOOD_PORT + 1];
@@ -4523,6 +4527,14 @@ public class SOCPlayer implements SOCDevCardConstants, Serializable, Cloneable
     public String toString()
     {
         return "Player["+playerNumber+" "+name+"]";
+    }
+    
+    public StringBuilder getMoveHistory() {
+    	return moveHistory;
+    }
+    
+    public void setMoveHistory(StringBuilder builder) {
+    	moveHistory = builder;
     }
 
     /**

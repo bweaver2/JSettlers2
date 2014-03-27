@@ -3851,7 +3851,7 @@ public class SOCRobotBrain extends Thread
         try
         {
             yield();
-            sleep(msec);
+            sleep(10);
         }
         catch (InterruptedException exc) {}
     }
